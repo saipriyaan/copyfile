@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f2f2f2; /* Light gray background */
+            font-family: Arial, sans-serif;
+        }
+        .upload-container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        .upload-container h1 {
+            margin-top: 0;
+            font-size: 24px;
+            color: #333;
+        }
+        .upload-container form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .upload-container input[type="file"] {
+            display: none; /* Hide the default file input */
+        }
+        .upload-button {
+            display: inline-block;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .upload-button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+        .upload-button.uploading {
+            background-color: #ffa500; /* Orange when uploading */
+        }
+        #upload-status {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="upload-container">
+
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file-upload" class="upload-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10-10-4.48-10-10 4.48-10 10-10zm-2 14h4v-4h-4v4zm6-10h-12v2h12v-2zm0 4h-12v2h12v-2zm0 4h-12v2h12v-2z"/>
+                </svg>
+                
+            </label>
+            <input id="file-upload" type="file" name="file" multiple>
+            <button type="submit" class="upload-button"></button>
+        </form>
+        <div id="upload-status"></div> <!-- Element to show upload status -->
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#file-upload').change(function() {
+                var files = $(this)[0].files;
+                var filename = '';
+                for (var i = 0; i < files.length; i++) {
+                    filename += files[i].name + ', ';
+                }
+                if (filename !== '') {
+                    $('.upload-button').html('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10-10-4.48-10-10 4.48-10 10-10zm-2 14h4v-4h-4v4zm6-10h-12v2h12v-2zm0 4h-12v2h12v-2zm0 4h-12v2h12v-2z"/></svg>');
+                    
+                    // Automatically submit the form
+                    $(this).closest('form').submit();
+                }
+            });
+
+            $('form').on('submit', function(event) {
+                event.preventDefault();
+                var formData = new FormData($(this)[0]);
+                var uploadButton = $('.upload-button');
+
+                // Add class for uploading indication
+                uploadButton.addClass('uploading');
+
+                $.ajax({
+                    xhr: function() {
+                        var xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener("progress", function(evt) {
+                            if (evt.lengthComputable) {
+                                var percentComplete = evt.loaded / evt.total;
+                                console.log(percentComplete); 
+                            }
+                        }, false);
+                        return xhr;
+                    },
+                    type: 'POST',
+                    url: '/upload',
+                    data: formData,
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        $('#upload-status').html('<p style="color:green;">.</p>');
+                        uploadButton.removeClass('uploading');
+                    },
+                    error: function() {
+                        $('#upload-status').html('<p style="color:red;">.</p>');
+                        uploadButton.removeClass('uploading');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
