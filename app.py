@@ -1,4 +1,3 @@
-import os
 import flask
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
@@ -46,7 +45,7 @@ def upload_file():
         folder = drive.files().create(body=folder_metadata, fields='id').execute()
         folder_id = folder.get('id')
 
-    # Handle file upload directly to Google Drive
+    # Handle file upload directly to Google Drive using streaming
     try:
         uploaded_file = flask.request.files['file']
         print(f'Uploaded file: {uploaded_file.filename}')
@@ -54,9 +53,20 @@ def upload_file():
             return 'No selected file'
 
         file_metadata = {'name': secure_filename(uploaded_file.filename), 'parents': [folder_id]}
-        media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
 
-        drive.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        # Use MediaIoBaseUpload with streaming
+        media = MediaIoBaseUpload(uploaded_file.stream, mimetype=uploaded_file.content_type, resumable=True)
+
+        # Use chunk size to optimize streaming (adjust as needed)
+        chunk_size = 10 * 1024 * 1024  # 10 MB chunks
+        request = drive.files().create(body=file_metadata, media_body=media, fields='id')
+        response = None
+
+        while response is None:
+            status, response = request.next_chunk(num_retries=5)
+            if status:
+                print(f"Uploaded {int(status.progress() * 100)}%.")
+
         save_credentials(credentials)
         return flask.jsonify({'message': 'File uploaded successfully'})
     except Exception as e:
@@ -130,3 +140,7 @@ if __name__ == '__main__':
     import os 
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  
     app.run('localhost', 8080, debug=True)
+
+
+
+    
