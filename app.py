@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from werkzeug.utils import secure_filename
 from io import BytesIO
 
-# Configuration
+# Configuration (replace with your actual credentials and settings)
 CLIENT_SECRETS_FILE = "gdrive.json"
 SCOPES = ['https://www.googleapis.com/auth/drive']
 API_SERVICE_NAME = 'drive'
@@ -32,7 +32,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    print('upload initiatied')
+    print('Upload initiated')
     credentials = get_credentials()
     if not credentials:
         return flask.redirect(flask.url_for('authorize'))
@@ -45,31 +45,23 @@ def upload_file():
         folder_metadata = {'name': 'MyUploads', 'mimeType': 'application/vnd.google-apps.folder'}
         folder = drive.files().create(body=folder_metadata, fields='id').execute()
         folder_id = folder.get('id')
-    
 
     # Handle file upload directly to Google Drive
-    uploaded_file = flask.request.files['file']
-    print(uploaded_file.filename)
-    if uploaded_file.filename == '':
-        return 'No selected file'
-
-    file_metadata = {'name': secure_filename(uploaded_file.filename), 'parents': [folder_id]}
-    print(file_metadata)
-    media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
-    if media:
-        print('conversion success')
-
     try:
-        print('uploading file',uploaded_file.filename)
-        
+        uploaded_file = flask.request.files['file']
+        print(f'Uploaded file: {uploaded_file.filename}')
+        if uploaded_file.filename == '':
+            return 'No selected file'
+
+        file_metadata = {'name': secure_filename(uploaded_file.filename), 'parents': [folder_id]}
+        media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
+
         drive.files().create(body=file_metadata, media_body=media, fields='id').execute()
-        print('uploading file',uploaded_file.filename)
         save_credentials(credentials)
         return flask.jsonify({'message': 'File uploaded successfully'})
     except Exception as e:
-        print('uploading file',uploaded_file.filename,'error')
-        print(f"Error uploading file to Google Drive: {e}")
-        return flask.jsonify({'error': 'Upload failed'}), 500
+        print(f'Error uploading file: {e}')
+        return flask.jsonify({'error': f'Upload failed: {e}'}), 500
 
 @app.route('/authorize')
 def authorize():
@@ -133,7 +125,6 @@ def credentials_to_dict(credentials):
         'client_secret': credentials.client_secret,
         'scopes': credentials.scopes
     }
-
 
 if __name__ == '__main__':
     import os 
