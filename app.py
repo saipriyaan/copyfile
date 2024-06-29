@@ -53,6 +53,8 @@ def upload_file():
 
     file_metadata = {'name': secure_filename(uploaded_file.filename), 'parents': [folder_id]}
     media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
+    if media:
+        print('conversion success')
 
     try:
         print('uploading file',uploaded_file.filename)
