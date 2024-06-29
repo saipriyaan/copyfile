@@ -32,6 +32,7 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    print('upload initiatied')
     credentials = get_credentials()
     if not credentials:
         return flask.redirect(flask.url_for('authorize'))
