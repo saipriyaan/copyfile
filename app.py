@@ -55,6 +55,7 @@ def upload_file():
 
     try:
         drive.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        print('uploading file',uploaded_file.filename)
         save_credentials(credentials)
         return flask.jsonify({'message': 'File uploaded successfully'})
     except Exception as e:
