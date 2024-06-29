@@ -48,10 +48,12 @@ def upload_file():
 
     # Handle file upload directly to Google Drive
     uploaded_file = flask.request.files['file']
+    print(uploaded_file.filename)
     if uploaded_file.filename == '':
         return 'No selected file'
 
     file_metadata = {'name': secure_filename(uploaded_file.filename), 'parents': [folder_id]}
+    print(file_metadata)
     media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
     if media:
         print('conversion success')
