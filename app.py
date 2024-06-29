@@ -44,6 +44,7 @@ def upload_file():
         folder_metadata = {'name': 'MyUploads', 'mimeType': 'application/vnd.google-apps.folder'}
         folder = drive.files().create(body=folder_metadata, fields='id').execute()
         folder_id = folder.get('id')
+    
 
     # Handle file upload directly to Google Drive
     uploaded_file = flask.request.files['file']
@@ -54,11 +55,14 @@ def upload_file():
     media = MediaIoBaseUpload(BytesIO(uploaded_file.read()), mimetype=uploaded_file.content_type)
 
     try:
+        print('uploading file',uploaded_file.filename)
+        
         drive.files().create(body=file_metadata, media_body=media, fields='id').execute()
         print('uploading file',uploaded_file.filename)
         save_credentials(credentials)
         return flask.jsonify({'message': 'File uploaded successfully'})
     except Exception as e:
+        print('uploading file',uploaded_file.filename,'error')
         print(f"Error uploading file to Google Drive: {e}")
         return flask.jsonify({'error': 'Upload failed'}), 500
 
